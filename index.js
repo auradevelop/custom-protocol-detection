@@ -26,12 +26,12 @@ function _createHiddenIframe(target, uri) {
     return iframe;
 }
 
-function openUriWithHiddenFrame(uri, failCb, successCb) {
+function openUriWithHiddenFrame(uri, failCb, successCb, timeout) {
 
     var timeout = setTimeout(function () {
         failCb();
         handler.remove();
-    }, 1000);
+    }, timeout);
 
     var iframe = document.querySelector("#hiddenIframe");
     if (!iframe) {
@@ -49,12 +49,12 @@ function openUriWithHiddenFrame(uri, failCb, successCb) {
     iframe.contentWindow.location.href = uri;
 }
 
-function openUriWithTimeoutHack(uri, failCb, successCb) {
+function openUriWithTimeoutHack(uri, failCb, successCb, timeout) {
     
     var timeout = setTimeout(function () {
         failCb();
         handler.remove();
-    }, 1000);
+    }, timeout);
 
     //handle page running in an iframe (blur must be registered with top level window)
     var target = window;
@@ -90,18 +90,18 @@ function openUriUsingFirefox(uri, failCb, successCb) {
     }
 }
 
-function openUriUsingIEInOlderWindows(uri, failCb, successCb) {
+function openUriUsingIEInOlderWindows(uri, failCb, successCb, timeout) {
     if (getInternetExplorerVersion() === 10) {
-        openUriUsingIE10InWindows7(uri, failCb, successCb);
+        openUriUsingIE10InWindows7(uri, failCb, successCb, timeout);
     } else if (getInternetExplorerVersion() === 9 || getInternetExplorerVersion() === 11) {
-        openUriWithHiddenFrame(uri, failCb, successCb);
+        openUriWithHiddenFrame(uri, failCb, successCb, timeout);
     } else {
-        openUriInNewWindowHack(uri, failCb, successCb);
+        openUriInNewWindowHack(uri, failCb, successCb, timeout);
     }
 }
 
-function openUriUsingIE10InWindows7(uri, failCb, successCb) {
-    var timeout = setTimeout(failCb, 1000);
+function openUriUsingIE10InWindows7(uri, failCb, successCb, timeout) {
+    var timeout = setTimeout(failCb, timeout);
     window.addEventListener("blur", function () {
         clearTimeout(timeout);
         successCb();
@@ -119,7 +119,7 @@ function openUriUsingIE10InWindows7(uri, failCb, successCb) {
     }
 }
 
-function openUriInNewWindowHack(uri, failCb, successCb) {
+function openUriInNewWindowHack(uri, failCb, successCb, timeout, timeout) {
     var myWindow = window.open('', '', 'width=0,height=0');
 
     myWindow.document.write("<iframe src='" + uri + "'></iframe>");
@@ -127,13 +127,13 @@ function openUriInNewWindowHack(uri, failCb, successCb) {
     setTimeout(function () {
         try {
             myWindow.location.href;
-            myWindow.setTimeout("window.close()", 1000);
+            myWindow.setTimeout("window.close()", timeout);
             successCb();
         } catch (e) {
             myWindow.close();
             failCb();
         }
-    }, 1000);
+    }, timeout);
 }
 
 function openUriWithMsLaunchUri(uri, failCb, successCb) {
@@ -174,7 +174,7 @@ function getInternetExplorerVersion() {
     return rv;
 }
 
-module.exports = function(uri, failCb, successCb, unsupportedCb) {
+module.exports = function(uri, failCb, successCb, unsupportedCb, timeout) {
     function failCallback() {
         failCb && failCb();
     }
@@ -184,18 +184,18 @@ module.exports = function(uri, failCb, successCb, unsupportedCb) {
     }
 
     if (navigator.msLaunchUri) { //for IE and Edge in Win 8 and Win 10
-        openUriWithMsLaunchUri(uri, failCb, successCb);
+        openUriWithMsLaunchUri(uri, failCb, successCb, timeout = 1000);
     } else {
         var browser = checkBrowser();
 
         if (browser.isFirefox) {
-            openUriUsingFirefox(uri, failCallback, successCallback);
+            openUriUsingFirefox(uri, failCallback, successCallback, timeout);
         } else if (browser.isChrome || browser.isIOS) {
-            openUriWithTimeoutHack(uri, failCallback, successCallback);
+            openUriWithTimeoutHack(uri, failCallback, successCallback, timeout);
         } else if (browser.isIE) {
-            openUriUsingIEInOlderWindows(uri, failCallback, successCallback);
+            openUriUsingIEInOlderWindows(uri, failCallback, successCallback, timeout);
         } else if (browser.isSafari) {
-            openUriWithHiddenFrame(uri, failCallback, successCallback);
+            openUriWithHiddenFrame(uri, failCallback, successCallback, timeout);
         } else {
             unsupportedCb();
             //not supported, implement please
