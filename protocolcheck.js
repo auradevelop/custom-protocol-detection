@@ -145,14 +145,13 @@ function openUriWithMsLaunchUri(uri, failCb, successCb) {
 }
 
 function checkBrowser() {
-    var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
     var ua = navigator.userAgent.toLowerCase();
     return {
         isOpera   : isOpera,
         isFirefox : typeof InstallTrigger !== 'undefined',
         isSafari  : (~ua.indexOf('safari') && !~ua.indexOf('chrome')) || Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
         isIOS     : /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-        isChrome  : !!window.chrome && !isOpera,
+        isChrome  : !!window.chrome,
         isIE      : /*@cc_on!@*/false || !!document.documentMode // At least IE6
     }
 }
